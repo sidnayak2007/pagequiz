@@ -464,7 +464,8 @@ async function extractPdf(file, onProgress = () => {}) {
       if (pageNo % 8 === 0) await new Promise(resolve => setTimeout(resolve, 0));
     }
   } finally {
-    await pdf.destroy();
+    try { pdf.cleanup?.(); } catch {}
+    try { await task.destroy?.(); } catch {}
   }
 
   return text.slice(0, MAX_TEXT_CHARS);
@@ -685,8 +686,6 @@ if (typeof document !== 'undefined') {
       const blocked = readHistory(currentFingerprint);
       quiz = generateQuizFromFacts(facts, count, difficulty, blocked);
 
-      // If the session already used nearly every viable prompt, relax old-history blocking
-      // but still retain per-quiz uniqueness. This prevents a dead end after many re-generations.
       if (quiz.length !== count && blocked.size) {
         quiz = generateQuizFromFacts(facts, count, difficulty, new Set());
       }
